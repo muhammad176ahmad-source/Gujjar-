@@ -216,28 +216,20 @@ def print_image_win(image_path, printer_name=None):
     try:
         if printer_name is None:
             printer_name = win32print.GetDefaultPrinter()
-        
         printer_dc = win32print.CreateDC("WINSPOOL", printer_name, None, None)
         dc = win32api.CreateCompatibleDC(printer_dc)
-        
         img = Image.open(image_path)
         img = img.convert("RGB")
-        
-        # Scale to printer
         printable_width = win32print.GetDeviceCaps(printer_dc, win32con.PHYSICALWIDTH)
         printable_height = win32print.GetDeviceCaps(printer_dc, win32con.PHYSICALHEIGHT)
-        
         scale = min(printable_width / img.width, printable_height / img.height)
         new_w = int(img.width * scale)
         new_h = int(img.height * scale)
         img = img.resize((new_w, new_h), Image.LANCZOS)
-        
         dib = ImageWin.Dib(img)
         dib.draw(dc, (0, 0, new_w, new_h))
-        
         win32api.DeleteDC(dc)
         win32print.DeleteDC(printer_dc)
-        
         return True, f"Printed to {printer_name}"
     except Exception as e:
         return False, str(e)
@@ -259,13 +251,15 @@ if 'splash_done' not in st.session_state:
     st.session_state.splash_done = False
 
 # ==========================================
-# INJECT ALL CSS (ORIGINAL GLASS DESIGN)
+# INJECT ALL CSS — REAL BUTTONS, NO GLASS ON BUTTONS
 # ==========================================
 st.markdown("""
 <link href="https://fonts.googleapis.com/css2?family=Pacifico&family=Lobster&family=Orbitron:wght@400;700;900&display=swap" rel="stylesheet">
 <style>
     :root {
         --primary: #059669;
+        --primary-dark: #047857;
+        --primary-darker: #065f46;
         --glass-bg: rgba(255, 255, 255, 0.65);
         --glass-border: rgba(255, 255, 255, 0.5);
         --text: #064e3b;
@@ -275,254 +269,257 @@ st.markdown("""
         --wa-green: #25D366;
         --footer-bg: linear-gradient(135deg, #0f2027, #203a43, #2c5364);
     }
+
+    /* ===== BACKGROUND ===== */
     .stApp {
         background: url('https://images.unsplash.com/photo-1441974231531-c6227db76b6e?q=80&w=1920&auto=format&fit=crop') no-repeat center center fixed;
         background-size: cover;
     }
+
+    /* ===== SIDEBAR ===== */
     section[data-testid="stSidebar"] {
-        background: rgba(255,255,255,0.7) !important;
+        background: rgba(255,255,255,0.85) !important;
         backdrop-filter: blur(15px) !important;
         -webkit-backdrop-filter: blur(15px) !important;
-        border-right: 1px solid rgba(255,255,255,0.5) !important;
+        border-right: 2px solid rgba(5,150,105,0.3) !important;
     }
+    section[data-testid="stSidebar"] .stButton > button {
+        width: 100% !important;
+    }
+
+    /* ===== INPUTS & LABELS ===== */
     div[data-testid="stTextInput"] label,
     div[data-testid="stSelectbox"] label,
     div[data-testid="stFileUploader"] label {
         color: #064e3b !important;
-        font-weight: 600 !important;
+        font-weight: 700 !important;
+        font-size: 0.95rem !important;
     }
     div[data-testid="stTextInput"] input,
     div[data-testid="stSelectbox"] select {
-        background: rgba(255,255,255,0.6) !important;
-        border: 1px solid rgba(255,255,255,0.6) !important;
+        background: #ffffff !important;
+        border: 2px solid #d1d5db !important;
         border-radius: 14px !important;
         color: #064e3b !important;
-        backdrop-filter: blur(5px) !important;
+        font-size: 1rem !important;
+        padding: 14px 16px !important;
+        min-height: 50px !important;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.06) !important;
+        transition: border-color 0.2s, box-shadow 0.2s !important;
+    }
+    div[data-testid="stTextInput"] input:focus,
+    div[data-testid="stSelectbox"] select:focus {
+        border-color: var(--primary) !important;
+        box-shadow: 0 0 0 4px rgba(5,150,105,0.15) !important;
+        outline: none !important;
     }
     div[data-testid="stFileUploader"] section {
-        background: rgba(255,255,255,0.4) !important;
-        border: 2px dashed rgba(5, 150, 105, 0.3) !important;
-        border-radius: 20px !important;
-        backdrop-filter: blur(5px) !important;
+        background: #ffffff !important;
+        border: 2px dashed #a7f3d0 !important;
+        border-radius: 18px !important;
+        padding: 28px 16px !important;
+        transition: all 0.25s ease !important;
     }
-    .stButton > button[kind="primary"],
+    div[data-testid="stFileUploader"] section:hover {
+        border-color: var(--primary) !important;
+        background: #f0fdf4 !important;
+    }
+
+    /* =========================================================
+       REAL SOLID BUTTONS — NO GLASS, PROPER LOOKING
+       ========================================================= */
     .stButton > button {
-        border-radius: 14px !important;
-        font-weight: 600 !important;
-        border: 1px solid rgba(255,255,255,0.2) !important;
-        transition: all 0.3s ease !important;
+        /* Remove all glass/blur from buttons */
+        background: transparent !important;
+        backdrop-filter: none !important;
+        -webkit-backdrop-filter: none !important;
+        border: none !important;
+        box-shadow: none !important;
+        padding: 0 !important;
+        position: relative !important;
+        overflow: hidden !important;
     }
-    .stButton > button:hover {
+
+    /* Primary green button */
+    .stButton > button[kind="primary"],
+    .stButton > button[kind="primaryFormSubmit"] {
+        background: linear-gradient(135deg, #059669, #047857) !important;
+        color: #ffffff !important;
+        font-size: 1.05rem !important;
+        font-weight: 700 !important;
+        padding: 16px 32px !important;
+        border-radius: 16px !important;
+        border: 2px solid #047857 !important;
+        box-shadow: 0 6px 20px rgba(5,150,105,0.35), inset 0 1px 0 rgba(255,255,255,0.2) !important;
+        text-shadow: 0 1px 2px rgba(0,0,0,0.2) !important;
+        letter-spacing: 0.5px !important;
+        cursor: pointer !important;
+        transition: all 0.25s ease !important;
+        min-height: 54px !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+    }
+    .stButton > button[kind="primary"]:hover,
+    .stButton > button[kind="primaryFormSubmit"]:hover {
+        background: linear-gradient(135deg, #047857, #065f46) !important;
+        border-color: #065f46 !important;
+        box-shadow: 0 10px 28px rgba(5,150,105,0.45), inset 0 1px 0 rgba(255,255,255,0.2) !important;
         transform: translateY(-2px) !important;
-        box-shadow: 0 8px 20px rgba(5, 150, 105, 0.4) !important;
     }
+    .stButton > button[kind="primary"]:active,
+    .stButton > button[kind="primaryFormSubmit"]:active {
+        transform: translateY(0) !important;
+        box-shadow: 0 4px 12px rgba(5,150,105,0.3) !important;
+    }
+
+    /* Secondary / default button */
+    .stButton > button[kind="secondary"] {
+        background: #ffffff !important;
+        color: #064e3b !important;
+        font-size: 1rem !important;
+        font-weight: 600 !important;
+        padding: 14px 28px !important;
+        border-radius: 14px !important;
+        border: 2px solid #d1d5db !important;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.08) !important;
+        cursor: pointer !important;
+        transition: all 0.25s ease !important;
+        min-height: 50px !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+    }
+    .stButton > button[kind="secondary"]:hover {
+        background: #f0fdf4 !important;
+        border-color: var(--primary) !important;
+        color: var(--primary-dark) !important;
+        box-shadow: 0 6px 18px rgba(5,150,105,0.15) !important;
+        transform: translateY(-2px) !important;
+    }
+    .stButton > button[kind="secondary"]:active {
+        transform: translateY(0) !important;
+    }
+
+    /* Small delete / icon buttons inside grids */
+    div[data-testid="stVerticalBlock"] > div > div > div.stButton > button,
+    .small-del-btn button {
+        background: #f3f4f6 !important;
+        color: #374151 !important;
+        font-size: 0.9rem !important;
+        font-weight: 600 !important;
+        padding: 10px 16px !important;
+        border-radius: 12px !important;
+        border: 2px solid #e5e7eb !important;
+        box-shadow: 0 2px 6px rgba(0,0,0,0.06) !important;
+        min-height: 42px !important;
+        transition: all 0.2s ease !important;
+    }
+    div[data-testid="stVerticalBlock"] > div > div > div.stButton > button:hover,
+    .small-del-btn button:hover {
+        background: #fef2f2 !important;
+        border-color: #fca5a5 !important;
+        color: #dc2626 !important;
+        box-shadow: 0 4px 10px rgba(239,68,68,0.15) !important;
+        transform: translateY(-1px) !important;
+    }
+
+    /* ===== GLASS CARDS (only on cards, NOT on buttons) ===== */
     .glass-card {
         background: var(--glass-bg);
         backdrop-filter: blur(20px);
         -webkit-backdrop-filter: blur(20px);
         border-radius: 24px;
-        padding: 25px;
-        margin-bottom: 20px;
+        padding: 28px;
+        margin-bottom: 22px;
         border: 1px solid var(--glass-border);
-        box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.15);
-        transition: transform 0.3s ease;
+        box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.12);
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
     }
     .glass-card:hover {
-        transform: translateY(-3px);
-        box-shadow: 0 12px 40px 0 rgba(31, 38, 135, 0.2);
+        transform: translateY(-2px);
+        box-shadow: 0 12px 40px 0 rgba(31, 38, 135, 0.18);
     }
+
     .card-title {
-        font-size: 0.8rem;
+        font-size: 0.85rem;
         color: var(--text-sub);
-        margin-bottom: 15px;
+        margin-bottom: 18px;
         text-transform: uppercase;
-        letter-spacing: 1.5px;
-        font-weight: 700;
-        border-bottom: 1px solid rgba(5, 150, 105, 0.2);
-        padding-bottom: 10px;
+        letter-spacing: 1.8px;
+        font-weight: 800;
+        border-bottom: 2px solid rgba(5, 150, 105, 0.2);
+        padding-bottom: 12px;
         display: flex;
         align-items: center;
         gap: 8px;
     }
+
+    /* ===== STATS ===== */
     .stat-chip {
         text-align: center;
-        background: rgba(255,255,255,0.5);
-        border: 1px solid rgba(255,255,255,0.6);
-        border-radius: 14px;
-        padding: 10px 6px;
-        backdrop-filter: blur(5px);
+        background: #ffffff;
+        border: 2px solid #e5e7eb;
+        border-radius: 16px;
+        padding: 14px 8px;
+        box-shadow: 0 3px 10px rgba(0,0,0,0.06);
     }
     .stat-num {
         font-family: 'Orbitron', monospace;
-        font-size: 1.2rem;
+        font-size: 1.4rem;
         font-weight: 700;
         color: var(--primary);
     }
     .stat-label {
-        font-size: 0.65rem;
+        font-size: 0.7rem;
         color: var(--text-sub);
         text-transform: uppercase;
-        letter-spacing: 0.5px;
-        margin-top: 2px;
-    }
-    .ip-pill {
-        background: rgba(5, 150, 105, 0.12);
-        color: #047857;
-        border: 1px dashed rgba(5, 150, 105, 0.5);
-        border-radius: 10px;
-        padding: 6px 10px;
-        font-size: 0.85rem;
+        letter-spacing: 0.8px;
+        margin-top: 4px;
         font-weight: 600;
+    }
+
+    /* ===== IP PILL ===== */
+    .ip-pill {
+        background: #f0fdf4;
+        color: #047857;
+        border: 2px solid #a7f3d0;
+        border-radius: 12px;
+        padding: 10px 14px;
+        font-size: 0.9rem;
+        font-weight: 700;
         word-break: break-all;
         text-align: center;
+        box-shadow: 0 2px 8px rgba(5,150,105,0.1);
     }
+
+    /* ===== DOC ITEMS ===== */
     .doc-item {
         display: flex;
         align-items: center;
         justify-content: space-between;
-        background: rgba(255,255,255,0.6);
-        padding: 12px;
+        background: #ffffff;
+        padding: 14px 16px;
         border-radius: 14px;
         margin-bottom: 10px;
-        border: 1px solid rgba(255,255,255,0.4);
-        box-shadow: 0 2px 5px rgba(0,0,0,0.05);
-        transition: 0.2s;
+        border: 2px solid #e5e7eb;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+        transition: all 0.2s;
     }
     .doc-item:hover {
-        background: rgba(255,255,255,0.9);
-        transform: translateX(5px);
-    }
-    .img-grid {
-        display: grid;
-        grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
-        gap: 12px;
-        margin-top: 15px;
-    }
-    .img-cell {
-        position: relative;
-        aspect-ratio: 1;
-        border-radius: 16px;
-        overflow: hidden;
-        background: rgba(255,255,255,0.5);
-        border: 2px solid transparent;
-        box-shadow: 0 4px 6px rgba(0,0,0,0.05);
-        transition: 0.3s;
-    }
-    .img-cell.selected {
-        border-color: var(--success);
-        transform: scale(1.05);
-        box-shadow: 0 8px 15px rgba(16, 185, 129, 0.3);
-    }
-    .img-cell img {
-        width: 100%;
-        height: 100%;
-        object-fit: cover;
+        border-color: #a7f3d0;
+        box-shadow: 0 4px 14px rgba(5,150,105,0.1);
+        transform: translateX(4px);
     }
 
-    /* MAIN FOOTER */
-    .main-footer {
-        position: fixed;
-        bottom: 0;
-        left: 0;
-        width: 100%;
-        background: linear-gradient(135deg, #0f2027, #203a43, #2c5364);
-        backdrop-filter: blur(20px);
-        -webkit-backdrop-filter: blur(20px);
-        border-top: 3px solid transparent;
-        border-image: linear-gradient(90deg, #10b981, #22d3ee, #fde047, #22d3ee, #10b981) 1;
-        z-index: 90;
-        box-shadow: 0 -10px 40px rgba(0,0,0,0.3);
-        animation: footerRise 0.8s ease-out;
-    }
-    @keyframes footerRise {
-        from { transform: translateY(100%); }
-        to { transform: translateY(0); }
-    }
-    .footer-inner {
-        display: flex;
-        align-items: center;
-        gap: 16px;
-        padding: 14px 20px;
-        max-width: 700px;
-        margin: 0 auto;
-    }
-    .footer-img-wrap {
-        position: relative;
-        flex-shrink: 0;
-        width: 72px;
-        height: 72px;
-        border-radius: 50%;
-        overflow: hidden;
-        border: 3px solid #22d3ee;
-        box-shadow: 0 0 15px rgba(34, 211, 238, 0.5), 0 4px 12px rgba(0,0,0,0.4);
-        animation: footerImgGlow 3s ease-in-out infinite;
-    }
-    @keyframes footerImgGlow {
-        0%,100% { box-shadow: 0 0 15px rgba(34, 211, 238, 0.5), 0 4px 12px rgba(0,0,0,0.4); border-color: #22d3ee; }
-        33%     { box-shadow: 0 0 18px rgba(74, 222, 128, 0.6), 0 4px 12px rgba(0,0,0,0.4); border-color: #4ade80; }
-        66%     { box-shadow: 0 0 18px rgba(253, 224, 71, 0.5), 0 4px 12px rgba(0,0,0,0.4); border-color: #fde047; }
-    }
-    .footer-img-wrap img {
-        width: 100%;
-        height: 100%;
-        object-fit: cover;
-        display: block;
-    }
-    .footer-title {
-        font-family: 'Pacifico', cursive;
-        font-size: 1.1rem;
-        margin: 0;
-        color: #fff;
-        text-shadow: 0 2px 8px rgba(0,0,0,0.5);
-    }
-    .footer-subtitle {
-        font-size: 0.72rem;
-        margin: 2px 0 0 0;
-        color: #67e8f9;
-        letter-spacing: 1px;
-    }
-    .footer-quote {
-        font-size: 0.68rem;
-        margin: 3px 0 0 0;
-        color: rgba(255,255,255,0.6);
-        font-style: italic;
-    }
-    .footer-clock-time {
-        font-family: 'Orbitron', monospace;
-        font-size: 1rem;
-        font-weight: 700;
-        color: #67e8f9;
-        text-shadow: 0 0 8px rgba(103, 232, 249, 0.4);
-    }
-    .footer-clock-date {
-        font-size: 0.65rem;
-        color: rgba(255,255,255,0.5);
-        margin-top: 2px;
-    }
-    .footer-bottom-bar {
-        background: rgba(0,0,0,0.3);
-        padding: 5px 20px;
-        text-align: center;
-        font-size: 0.65rem;
-        color: rgba(255,255,255,0.4);
-        letter-spacing: 0.5px;
-    }
-    @media (max-width: 480px) {
-        .footer-img-wrap { width: 56px; height: 56px; }
-        .footer-title { font-size: 0.95rem; }
-        .footer-subtitle { font-size: 0.65rem; }
-        .footer-quote { font-size: 0.6rem; }
-        .footer-clock-time { font-size: 0.85rem; }
-    }
-
-    /* BANNER */
+    /* ===== BANNER ===== */
     .banner {
         position: relative;
         width: 100%;
         height: 220px;
         overflow: hidden;
         background: #000;
-        box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+        box-shadow: 0 6px 20px rgba(0,0,0,0.3);
         border-bottom: 4px solid var(--primary);
         margin-bottom: 20px;
     }
@@ -551,7 +548,7 @@ st.markdown("""
     }
     .banner-text h2 {
         font-family: 'Pacifico', cursive;
-        font-size: 2rem;
+        font-size: 2.2rem;
         margin: 0;
         color: #fff;
         text-shadow: 0 3px 10px rgba(0,0,0,0.6);
@@ -559,8 +556,9 @@ st.markdown("""
     .banner-text p {
         margin-top: 8px;
         color: #bbf7d0;
-        font-size: 0.95rem;
+        font-size: 1rem;
         letter-spacing: 1px;
+        font-weight: 500;
     }
     .banner-pulse {
         position: absolute;
@@ -569,15 +567,17 @@ st.markdown("""
         display: flex;
         align-items: center;
         gap: 6px;
-        background: rgba(0,0,0,0.5);
-        padding: 6px 12px;
-        border-radius: 20px;
+        background: rgba(0,0,0,0.6);
+        padding: 8px 14px;
+        border-radius: 22px;
         color: #4ade80;
-        font-size: 0.8rem;
+        font-size: 0.85rem;
+        font-weight: 600;
+        border: 1px solid rgba(74,222,128,0.3);
     }
     .live-dot {
-        width: 8px;
-        height: 8px;
+        width: 9px;
+        height: 9px;
         border-radius: 50%;
         background: #4ade80;
         box-shadow: 0 0 8px #4ade80;
@@ -588,61 +588,63 @@ st.markdown("""
         50% { opacity: 0.3; }
     }
 
-    /* NAV LINKS */
+    /* ===== NAV BAR ===== */
     .nav-bar {
         display: flex;
         justify-content: center;
-        gap: 8px;
-        padding: 8px 12px;
+        gap: 10px;
+        padding: 10px 14px;
         flex-wrap: wrap;
-        background: rgba(255,255,255,0.55);
+        background: rgba(255,255,255,0.6);
         backdrop-filter: blur(12px);
         -webkit-backdrop-filter: blur(12px);
-        border-bottom: 1px solid var(--glass-border);
-        box-shadow: 0 2px 12px rgba(0,0,0,0.06);
-        margin-bottom: 20px;
-        border-radius: 10px;
+        border: 1px solid var(--glass-border);
+        box-shadow: 0 3px 14px rgba(0,0,0,0.06);
+        margin-bottom: 22px;
+        border-radius: 16px;
     }
     .nav-link {
         display: inline-flex;
         align-items: center;
-        gap: 6px;
-        padding: 8px 16px;
-        border-radius: 22px;
-        font-size: 0.9rem;
-        font-weight: 600;
+        gap: 7px;
+        padding: 10px 20px;
+        border-radius: 24px;
+        font-size: 0.92rem;
+        font-weight: 700;
         color: #064e3b;
         text-decoration: none;
-        background: rgba(255,255,255,0.6);
-        border: 1px solid rgba(255,255,255,0.7);
+        background: #ffffff;
+        border: 2px solid #e5e7eb;
         transition: all 0.25s ease;
         cursor: pointer;
         white-space: nowrap;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.05);
     }
     .nav-link:hover {
-        background: linear-gradient(135deg, #059669, #10b981);
+        background: linear-gradient(135deg, #059669, #047857);
         color: #fff;
-        transform: translateY(-2px);
-        box-shadow: 0 6px 14px rgba(5,150,105,0.35);
+        border-color: #047857;
+        transform: translateY(-3px);
+        box-shadow: 0 8px 20px rgba(5,150,105,0.35);
     }
 
-    /* HEADER */
+    /* ===== HEADER ===== */
     .app-header {
-        background: var(--glass-bg);
+        background: rgba(255,255,255,0.75);
         backdrop-filter: blur(15px);
         -webkit-backdrop-filter: blur(15px);
-        padding: 12px 20px;
+        padding: 14px 24px;
         display: flex;
         justify-content: space-between;
         align-items: center;
-        border-bottom: 1px solid var(--glass-border);
-        box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
-        border-radius: 14px;
-        margin-bottom: 10px;
+        border: 1px solid var(--glass-border);
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+        border-radius: 16px;
+        margin-bottom: 12px;
     }
     .header-title {
         font-family: 'Pacifico', cursive;
-        font-size: 1.4rem;
+        font-size: 1.5rem;
         background: linear-gradient(45deg, #059669, #10b981);
         -webkit-background-clip: text;
         -webkit-text-fill-color: transparent;
@@ -650,38 +652,37 @@ st.markdown("""
     }
     .live-clock {
         font-family: 'Orbitron', monospace;
-        font-size: 0.85rem;
+        font-size: 0.9rem;
         font-weight: 700;
         color: #047857;
-        background: rgba(255,255,255,0.4);
-        padding: 6px 12px;
+        background: #ffffff;
+        padding: 8px 14px;
         border-radius: 12px;
-        border: 1px solid rgba(255,255,255,0.6);
-        backdrop-filter: blur(5px);
+        border: 2px solid #d1d5db;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.06);
         letter-spacing: 1px;
     }
     .status-dot {
-        width: 12px;
-        height: 12px;
+        width: 14px;
+        height: 14px;
         border-radius: 50%;
         background: #cbd5e1;
-        transition: 0.3s;
-        border: 2px solid #fff;
-        box-shadow: 0 0 0 1px #cbd5e1;
+        border: 3px solid #ffffff;
+        box-shadow: 0 0 0 1px #cbd5e1, 0 2px 6px rgba(0,0,0,0.1);
         display: inline-block;
+        transition: all 0.3s;
     }
     .status-dot.active {
         background: var(--success);
-        border-color: #fff;
-        box-shadow: 0 0 0 1px var(--success);
+        box-shadow: 0 0 0 1px var(--success), 0 0 0 4px rgba(16,185,129,0.2), 0 2px 6px rgba(0,0,0,0.1);
         animation: pulseGreen 2s infinite;
     }
     @keyframes pulseGreen {
         0%,100% { box-shadow: 0 0 0 1px var(--success), 0 0 0 0 rgba(16,185,129,0.4); }
-        50% { box-shadow: 0 0 0 1px var(--success), 0 0 0 8px rgba(16,185,129,0); }
+        50% { box-shadow: 0 0 0 1px var(--success), 0 0 0 10px rgba(16,185,129,0); }
     }
 
-    /* SPLASH */
+    /* ===== SPLASH ===== */
     .splash-screen {
         position: fixed;
         inset: 0;
@@ -731,8 +732,8 @@ st.markdown("""
         text-shadow: 0 2px 5px rgba(0,0,0,0.8);
     }
     .splash-loader {
-        width: 240px;
-        height: 5px;
+        width: 260px;
+        height: 6px;
         border-radius: 3px;
         background: rgba(255,255,255,0.15);
         overflow: hidden;
@@ -749,50 +750,189 @@ st.markdown("""
     @keyframes zoomEffect { 0% { transform: scale(1); } 100% { transform: scale(1.15); } }
     @keyframes slideUpFade { 0% { opacity: 0; transform: translateY(50px); } 100% { opacity: 1; transform: translateY(0); } }
 
-    /* PRINT BTN */
-    .print-float-btn {
+    /* ===== FOOTER ===== */
+    .main-footer {
         position: fixed;
-        bottom: 120px;
-        left: 50%;
-        transform: translateX(-50%);
-        z-index: 95;
-        width: 90%;
-        max-width: 560px;
+        bottom: 0;
+        left: 0;
+        width: 100%;
+        background: linear-gradient(135deg, #0f2027, #203a43, #2c5364);
+        border-top: 3px solid transparent;
+        border-image: linear-gradient(90deg, #10b981, #22d3ee, #fde047, #22d3ee, #10b981) 1;
+        z-index: 90;
+        box-shadow: 0 -10px 40px rgba(0,0,0,0.3);
+        animation: footerRise 0.8s ease-out;
+    }
+    @keyframes footerRise {
+        from { transform: translateY(100%); }
+        to { transform: translateY(0); }
+    }
+    .footer-inner {
+        display: flex;
+        align-items: center;
+        gap: 16px;
+        padding: 16px 24px;
+        max-width: 700px;
+        margin: 0 auto;
+    }
+    .footer-img-wrap {
+        position: relative;
+        flex-shrink: 0;
+        width: 68px;
+        height: 68px;
+        border-radius: 50%;
+        overflow: hidden;
+        border: 3px solid #22d3ee;
+        box-shadow: 0 0 15px rgba(34, 211, 238, 0.5), 0 4px 12px rgba(0,0,0,0.4);
+        animation: footerImgGlow 3s ease-in-out infinite;
+    }
+    @keyframes footerImgGlow {
+        0%,100% { box-shadow: 0 0 15px rgba(34, 211, 238, 0.5), 0 4px 12px rgba(0,0,0,0.4); border-color: #22d3ee; }
+        33%     { box-shadow: 0 0 18px rgba(74, 222, 128, 0.6), 0 4px 12px rgba(0,0,0,0.4); border-color: #4ade80; }
+        66%     { box-shadow: 0 0 18px rgba(253, 224, 71, 0.5), 0 4px 12px rgba(0,0,0,0.4); border-color: #fde047; }
+    }
+    .footer-img-wrap img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        display: block;
+    }
+    .footer-title {
+        font-family: 'Pacifico', cursive;
+        font-size: 1.15rem;
+        margin: 0;
+        color: #fff;
+        text-shadow: 0 2px 8px rgba(0,0,0,0.5);
+    }
+    .footer-subtitle {
+        font-size: 0.75rem;
+        margin: 3px 0 0 0;
+        color: #67e8f9;
+        letter-spacing: 1px;
+    }
+    .footer-quote {
+        font-size: 0.7rem;
+        margin: 4px 0 0 0;
+        color: rgba(255,255,255,0.6);
+        font-style: italic;
+    }
+    .footer-clock-time {
+        font-family: 'Orbitron', monospace;
+        font-size: 1.05rem;
+        font-weight: 700;
+        color: #67e8f9;
+        text-shadow: 0 0 8px rgba(103, 232, 249, 0.4);
+    }
+    .footer-clock-date {
+        font-size: 0.68rem;
+        color: rgba(255,255,255,0.5);
+        margin-top: 3px;
+    }
+    .footer-bottom-bar {
+        background: rgba(0,0,0,0.3);
+        padding: 6px 24px;
+        text-align: center;
+        font-size: 0.68rem;
+        color: rgba(255,255,255,0.4);
+        letter-spacing: 0.5px;
     }
 
-    /* WA SHARE BTN */
+    /* ===== WA SHARE BUTTON ===== */
     .wa-share-btn {
         display: inline-flex;
         align-items: center;
-        gap: 6px;
-        padding: 8px 18px;
-        border-radius: 22px;
-        font-size: 0.85rem;
-        font-weight: 600;
-        color: white;
-        background: var(--wa-green);
+        justify-content: center;
+        gap: 8px;
+        padding: 14px 28px;
+        border-radius: 16px;
+        font-size: 1rem;
+        font-weight: 700;
+        color: #ffffff;
+        background: linear-gradient(135deg, #25D366, #128C7E);
         text-decoration: none;
+        border: 2px solid #128C7E;
+        box-shadow: 0 6px 20px rgba(37,211,102,0.35);
         transition: all 0.25s ease;
         cursor: pointer;
-        border: none;
+        width: 100%;
+        text-align: center;
     }
     .wa-share-btn:hover {
-        background: #1ebc57;
+        background: linear-gradient(135deg, #128C7E, #075E54);
+        border-color: #075E54;
         transform: translateY(-2px);
-        box-shadow: 0 5px 15px rgba(37, 211, 102, 0.4);
+        box-shadow: 0 10px 28px rgba(37,211,102,0.45);
     }
 
-    /* BT LOG */
+    /* ===== BT LOG ===== */
     .bt-log {
-        margin-top: 12px;
-        font-size: 0.8rem;
+        margin-top: 14px;
+        font-size: 0.82rem;
         color: #374151;
-        max-height: 140px;
+        max-height: 150px;
         overflow-y: auto;
-        background: rgba(255,255,255,0.5);
-        padding: 10px;
-        border-radius: 10px;
-        border: 1px solid rgba(255,255,255,0.5);
+        background: #ffffff;
+        padding: 14px;
+        border-radius: 14px;
+        border: 2px solid #e5e7eb;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+    }
+
+    /* ===== PRINT READY CARD ===== */
+    .print-ready-card {
+        background: #f0fdf4;
+        backdrop-filter: none;
+        border: 3px solid #10b981;
+        border-radius: 24px;
+        padding: 28px;
+        margin-bottom: 22px;
+        box-shadow: 0 8px 32px rgba(16,185,129,0.15);
+    }
+
+    /* ===== RESPONSIVE ===== */
+    @media (max-width: 640px) {
+        .banner { height: 180px; }
+        .banner-text h2 { font-size: 1.6rem; }
+        .banner-text p { font-size: 0.85rem; }
+        .app-header { padding: 10px 16px; }
+        .header-title { font-size: 1.2rem; }
+        .live-clock { font-size: 0.78rem; padding: 6px 10px; }
+        .nav-bar { gap: 6px; padding: 8px 10px; }
+        .nav-link { padding: 8px 14px; font-size: 0.82rem; }
+        .glass-card { padding: 20px; border-radius: 20px; }
+        .card-title { font-size: 0.78rem; margin-bottom: 14px; }
+        .stat-num { font-size: 1.1rem; }
+        .footer-inner { padding: 12px 16px; gap: 12px; }
+        .footer-img-wrap { width: 52px; height: 52px; }
+        .footer-title { font-size: 0.95rem; }
+        .footer-subtitle { font-size: 0.65rem; }
+        .footer-quote { font-size: 0.6rem; }
+        .footer-clock-time { font-size: 0.85rem; }
+        
+        .stButton > button[kind="primary"],
+        .stButton > button[kind="primaryFormSubmit"] {
+            font-size: 0.95rem !important;
+            padding: 14px 24px !important;
+            min-height: 50px !important;
+            border-radius: 14px !important;
+        }
+        .stButton > button[kind="secondary"] {
+            font-size: 0.9rem !important;
+            padding: 12px 20px !important;
+            min-height: 46px !important;
+        }
+    }
+
+    @media (min-width: 1024px) {
+        .banner { height: 260px; }
+        .banner-text h2 { font-size: 2.6rem; }
+        .glass-card { padding: 32px; }
+        .stButton > button[kind="primary"],
+        .stButton > button[kind="primaryFormSubmit"] {
+            font-size: 1.1rem !important;
+            padding: 18px 36px !important;
+            min-height: 58px !important;
+        }
     }
 </style>
 """, unsafe_allow_html=True)
@@ -848,7 +988,7 @@ status_class = "active" if st.session_state.connected else ""
 st.markdown(f"""
 <div class="app-header">
     <h1 class="header-title">Ahmad Gujjar</h1>
-    <div style="display:flex; align-items:center; gap:10px;">
+    <div style="display:flex; align-items:center; gap:12px;">
         <div class="live-clock">{time_str}</div>
         <span class="status-dot {status_class}"></span>
     </div>
@@ -856,7 +996,7 @@ st.markdown(f"""
 """, unsafe_allow_html=True)
 
 # ==========================================
-# NAV BAR (Poetry, Islamic, News)
+# NAV BAR
 # ==========================================
 st.markdown("""
 <div class="nav-bar">
@@ -882,7 +1022,7 @@ sel_img_count = len([img for img in st.session_state.images if img['selected']])
 printers_list = get_printers()
 
 st.markdown(f"""
-<div style="display:flex; gap:8px; margin-bottom:20px;">
+<div style="display:flex; gap:10px; margin-bottom:22px;">
     <div class="stat-chip" style="flex:1;">
         <div class="stat-num">{sel_img_count}</div>
         <div class="stat-label">Images</div>
@@ -899,7 +1039,7 @@ st.markdown(f"""
 """, unsafe_allow_html=True)
 
 # ==========================================
-# SIDEBAR — QR / BARCODE / INFO
+# SIDEBAR
 # ==========================================
 with st.sidebar:
     st.title("🔥 Menu")
@@ -1054,7 +1194,6 @@ if st.session_state.connected:
             else:
                 st.info(f"📊 {excel_file.name} already exists")
     
-    # Display docs list
     if st.session_state.docs:
         st.write("**Uploaded Documents:**")
         for i, doc in enumerate(st.session_state.docs):
@@ -1098,14 +1237,12 @@ if st.session_state.connected:
         else:
             st.info("All images already exist in gallery.")
     
-    # Display images with select/delete
     if st.session_state.images:
         cols = st.columns(4)
         for i, img in enumerate(st.session_state.images):
             with cols[i % 4]:
-                sel_border = "selected" if img["selected"] else ""
                 try:
-                    st.image(img["path"], width=120, use_container_width=True)
+                    st.image(img["path"], use_container_width=True)
                 except Exception:
                     st.warning(f"⚠️ Can't display {img['name']}")
                 
@@ -1124,7 +1261,7 @@ if st.session_state.connected:
                         st.rerun()
         
         sel_count = len([img for img in st.session_state.images if img["selected"]])
-        st.markdown(f'<p style="text-align:center; font-size:0.9rem; color:#059669; margin-top:15px; font-weight:500;">{sel_count} Selected</p>', unsafe_allow_html=True)
+        st.markdown(f'<p style="text-align:center; font-size:1rem; color:#059669; margin-top:18px; font-weight:700;">{sel_count} Selected</p>', unsafe_allow_html=True)
     else:
         st.info("No images uploaded yet. Click above to add HD photos.")
     
@@ -1144,10 +1281,10 @@ if st.session_state.connected:
     col_pair, col_disc = st.columns(2)
     with col_pair:
         if st.button("🔵 Pair Device", use_container_width=True, type="primary"):
-            st.session_state.bt_log.append(f"[{time.strftime('%H:%M:%S')}] Web Bluetooth API — not supported in Streamlit backend. Use browser-based version for full Bluetooth.")
-            st.info("⚠️ Bluetooth requires browser Web Bluetooth API.\nStreamlit server can't access device Bluetooth.\nUse the HTML/Flask version for Bluetooth features.")
+            st.session_state.bt_log.append(f"[{time.strftime('%H:%M:%S')}] Web Bluetooth API — not supported in Streamlit backend.")
+            st.info("⚠️ Bluetooth requires browser Web Bluetooth API.\nUse the HTML/Flask version for full Bluetooth.")
     with col_disc:
-        if st.button("❌ Disconnect", use_container_width=True):
+        if st.button("❌ Disconnect", use_container_width=True, type="secondary"):
             st.session_state.bt_log.append(f"[{time.strftime('%H:%M:%S')}] Disconnected (no active connection)")
     
     bt_files = st.file_uploader("Pick Images for Bluetooth", type=["jpg", "jpeg", "png"], accept_multiple_files=True, key="bt_img_up", label_visibility="collapsed")
@@ -1157,14 +1294,14 @@ if st.session_state.connected:
     
     if st.button("📤 Send via Bluetooth", use_container_width=True, type="primary"):
         st.session_state.bt_log.append(f"[{time.strftime('%H:%M:%S')}] Bluetooth send — requires Web Bluetooth API (browser only)")
-        st.warning("Bluetooth file transfer requires Web Bluetooth API which is only available in browser context, not in Streamlit server.")
+        st.warning("Bluetooth file transfer requires Web Bluetooth API which is only available in browser context.")
     
     st.markdown('<div class="bt-log">', unsafe_allow_html=True)
     for log_line in st.session_state.bt_log:
         st.caption(log_line)
     st.markdown('</div>', unsafe_allow_html=True)
     
-    st.caption("**Note:** If your browser doesn't support Web Bluetooth (e.g. iOS Safari, Firefox), the app will automatically fall back to WiFi transfer.")
+    st.caption("**Note:** If your browser doesn't support Web Bluetooth (e.g. iOS Safari, Firefox), the app falls back to WiFi transfer.")
     
     st.markdown('</div>', unsafe_allow_html=True)
 
@@ -1174,7 +1311,7 @@ if st.session_state.connected:
     sel_imgs = [img for img in st.session_state.images if img['selected']]
     
     if sel_imgs or st.session_state.docs:
-        st.markdown('<div class="glass-card" style="border: 2px solid #10b981;">', unsafe_allow_html=True)
+        st.markdown('<div class="print-ready-card">', unsafe_allow_html=True)
         
         total_files = len(sel_imgs) + len(st.session_state.docs)
         st.markdown(f'<div class="card-title">🚀 Ready to Print & Send ({total_files} files)</div>', unsafe_allow_html=True)
@@ -1185,7 +1322,6 @@ if st.session_state.connected:
             st.write(f"**Documents:** {len(st.session_state.docs)}")
         
         if st.button("🚀 PRINT & SEND", use_container_width=True, type="primary"):
-            # Try to print images
             if sel_imgs and st.session_state.selected_printer:
                 for img in sel_imgs:
                     ok, msg = print_image_win(img['path'], st.session_state.selected_printer)
@@ -1196,7 +1332,6 @@ if st.session_state.connected:
             elif sel_imgs and not st.session_state.selected_printer:
                 st.warning("⚠️ No printer selected. Images not printed (but still in queue for PC transfer).")
             
-            # Try to send to target PC
             target = st.session_state.get('target_ip', '')
             if target and sel_imgs:
                 all_paths = [img['path'] for img in sel_imgs]
