@@ -2,3 +2,5 @@ streamlit
 Pillow
 qrcode
 python-barcode
+streamlit
+flask
